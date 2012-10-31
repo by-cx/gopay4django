@@ -1,0 +1,24 @@
+Python GoPay API v2.3
+=====================
+
+Django app to integrate GoPay into your project.
+
+Instalation
+-----------
+
+pip install ...
+
+Configuration
+-------------
+
+Add *gopay* into *installed_apps* and set these parameters:
+
+    GOPAY_GOID = <your go id> # should be integer
+    GOPAY_FAILED_URL = <success url>
+    GOPAY_SUCCESS_URL = <failed url>
+    GOPAY_SECRET_KEY = <your secret key>
+    GOPAY_TEST_GW = <True or False>
+    GOPAY_LANG = <lang>
+    GOPAY_DEFAULT_PAYMENT_CHANNEL = <default payment channel>
+    GOPAY_PAYMENT_CHANNELS = <list with payment channels>
+

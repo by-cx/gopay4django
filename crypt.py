@@ -3,6 +3,7 @@ from binascii import unhexlify
 from hashlib import sha1
 from Crypto.Cipher import DES3
 from django.conf import settings
+from pyDes import triple_des
 
 """
 Copyright (c) 2012, Vladimír Linhart
@@ -56,8 +57,6 @@ class GoCrypt(object):
         return result.encode('hex')
 
     def encrypt_pydes(self, command):
-        from pyDes import triple_des
-
         hashed_command = self.hash(command)
         des = triple_des(self.secret)
         result = des.encrypt(hashed_command)
@@ -68,7 +67,5 @@ class GoCrypt(object):
         return des.decrypt(unhexlify(encrypted_data)).rstrip('\x00')
 
     def decrypt_pydes(self, encrypted_data):
-        from pyDes import triple_des
-
         des = triple_des(self.secret)
         return des.decrypt(unhexlify(encrypted_data)).rstrip('\x00')
