@@ -23,6 +23,10 @@ Add *gopay* into *installed_apps* and set these parameters:
     GOPAY_DEFAULT_PAYMENT_CHANNEL = "cz_cs_c"
     GOPAY_PAYMENT_CHANNELS = ["cz_gp_u", "cz_gp_w", "cz_rb", "cz_vb", "cz_kb", "cz_cs_c", "cz_mb", "cz_fb", "cz_ge"]
 
+Add this somewhere into your urls.
+
+    url(r'^gopay/', include('gopay.urls')),
+
 If you don't know what codes you can use, try:
 
     python manage.py payment_channels
