@@ -1,3 +1,6 @@
 *.pyc
 *.pyo
 .idea
+build/
+dist/
+gopay4django.egg-info/
