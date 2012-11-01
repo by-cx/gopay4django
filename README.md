@@ -5,6 +5,14 @@ Developed for Fraggo.net s.r.o. <[http://www.fraggo.net/](http://www.fraggo.net/
 
 Django app to integrate GoPay into your project.
 
+I implemented just a part of the API:
+
+* paymentStatus
+* paymentMethodList
+* createPayment
+
+Feel free to add other parts!
+
 Instalation
 -----------
 
@@ -34,4 +42,5 @@ If you don't know what codes you can use, try:
     python manage.py payment_channels
 
 When user comes back from GoPay to your site, this app handle the request and decide where will be user redirected. If
-all goes well, GOPAY_SUCCESS_URL will be used, otherwise GOPAY_FAILED_URL.
+all goes well, GOPAY_SUCCESS_URL will be used, otherwise GOPAY_FAILED_URL. There is also parametr *payment_uuid* to get
+payment data from Payment model.
