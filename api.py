@@ -9,7 +9,6 @@ from gopay.models import Payment
 
 VALID_CURRENCY = ["CZK", "EUR"]
 VALID_LANGS = ["CZE"]
-VALIED_PAYMENT_CHANNELS = ["cz_gp_w", "cz_gp_u", "cz_rb", "SUPERCASH"]
 FULL_INTGRATION_URL = "https://gate.gopay.cz/gw/pay-full-v2?sessionInfo.targetGoId=%(goId)s&sessionInfo.paymentSessionId=%(sessionId)s&sessionInfo.encryptedSignature=%(encryptedSignature)s"
 TEST_FULL_INTGRATION_URL = "https://testgw.gopay.cz/gw/pay-full-v2?sessionInfo.targetGoId=%(goId)s&sessionInfo.paymentSessionId=%(sessionId)s&sessionInfo.encryptedSignature=%(encryptedSignature)s"
 TEST_GW = 'https://testgw.gopay.cz/axis/EPaymentServiceV2?wsdl'
@@ -27,8 +26,6 @@ SIGNATURES = {
     "status_result": ["productName", "totalPrice", "currency", "orderNumber", "recurrentPayment", "parentPaymentSessionId", "preAuthorization", "result", "sessionState", "sessionSubState", "paymentChannel"],
     # when user comes back to success url
     "identity": ["paymentSessionId", "parentPaymentSessionId", "orderNumber"], # when user is returned back
-    # notification (propably wrong)
-    "notification": ["paymentSessionId", "orderNumber"],
 }
 
 class GoPayException(Exception): pass
@@ -65,8 +62,10 @@ class Signature(object):
 
     def _create_signature(self, parms, encoded=True):
         long_string = "|".join(parms)
-        print " " * 25, long_string
         gocrypt = GoCrypt()
+        print "Long string:".ljust(25), long_string
+        print "Hash:".ljust(25), gocrypt.hash(long_string)
+        print "Encrypted hash:".ljust(25), gocrypt.encrypt_pydes(long_string)
         if encoded:
             signature = gocrypt.encrypt_pydes(long_string)
         else:
@@ -75,10 +74,12 @@ class Signature(object):
 
     def verify_signature(self, signature1, signature2):
         crypt = GoCrypt()
+        print "My ph1", signature1
+        print "Go ph1", signature2
         signature1 = crypt.decrypt_pydes(signature1)
         signature2 = crypt.decrypt_pydes(signature2)
-        print "My", signature1
-        print "Go", signature2
+        print "My ph2", signature1
+        print "Go ph2", signature2
         if signature1 != signature2:
             raise GoPayException("Error: signatures dont't match")
         return True
@@ -93,6 +94,7 @@ class Signature(object):
 
     def create_command_signature(self, data, encoded=True):
         parms = self._prepare_parms([data[parm] for parm in SIGNATURES["command"]])
+        print parms
         return self._create_signature(parms, encoded=encoded)
 
     def create_command_result_signature(self, data, encoded=True):
@@ -123,11 +125,33 @@ class GoPay(object):
             self.gw_url = GW
             self.integration_url = FULL_INTGRATION_URL
 
+    def _settings_check(self):
+        pass
+        # check combination of payment methods and selected currency
+
+    def _gen_valid_payment_channels(self):
+        data = self.get_payment_channels()
+        channels_list = []
+        for code in data:
+            method = data[code]
+            channels_list.append(code)
+        return channels_list
+
     def get_client(self):
         return Client(self.gw_url)
 
     def get_full_integration_url(self, session_id, signature):
         return self.integration_url % {"goId": self.goid, "sessionId": session_id, "encryptedSignature": signature}
+
+    def get_available_payment_channels(self):
+        channels = [code for code in self._gen_valid_payment_channels()]
+        available_channels = []
+        for code in settings.GOPAY_PAYMENT_CHANNELS:
+            if code in channels:
+                available_channels.append(code)
+        if not available_channels:
+            raise GoPayException("Error: no available payment channel")
+        return available_channels
 
     def check_payment(self, payment_id):
         payment = get_object_or_404(Payment, id=payment_id)
@@ -143,13 +167,37 @@ class GoPay(object):
 
         client = self.get_client()
         payment_status = client.service.paymentStatus(payment_session)
+        if payment_status["result"] != "CALL_COMPLETED":
+            raise GoPayException("Error: communication problem (%s)" % payment_status["resultDescription"])
         true_signature = signature.create_status_result_signature(payment_status)
         signature.verify_signature(true_signature, payment_status["encryptedSignature"])
+
+        if payment.payment_command.get("productName") != payment_status["productName"] or \
+           payment.payment_command.get("totalPrice") != payment_status["totalPrice"] or \
+           payment.payment_command.get("orderNumber") != payment_status["orderNumber"]:
+            raise GoPayException("Error: Mishmash productName, totalPrice and orderNumber")
+
         payment.payment_status = payment_status
         payment.state = payment_status["sessionState"]
         payment.save()
 
         return True if payment_status["sessionState"] == "PAID" else False
+
+    def get_payment_channels(self):
+        client = self.get_client()
+        downloaded_methods = client.service.paymentMethodList()
+        methods = {}
+        for method in downloaded_methods:
+            if method["offline"]: continue
+            methods[method["code"]] = {
+                "name": method["paymentMethod"],
+                "description": method["description"],
+                "logo": method["logo"],
+                "supportPreauthorization": method["supportPreauthorization"],
+                "supportRecurrent": method["supportRecurrent"],
+                "supportedCurrency": method["supportedCurrency"],
+            }
+        return methods
 
     def create_payment(self,
                           productName,
@@ -169,7 +217,6 @@ class GoPay(object):
                           recurrenceCycle=None,
                           recurrencePeriod=None,
                           defaultPaymentChannel=settings.GOPAY_DEFAULT_PAYMENT_CHANNEL,
-                          paymentChannels=settings.GOPAY_PAYMENT_CHANNELS,
                           lang=settings.GOPAY_LANG,
                           p1=None,
                           p2=None,
@@ -192,9 +239,6 @@ class GoPay(object):
             raise GoPayException("Error: Wrong lang value")
         if type(totalPrice) not in (float, int):
             raise GoPayException("Error: Wrong price value")
-        for channel in paymentChannels:
-            if channel not in VALIED_PAYMENT_CHANNELS:
-                raise GoPayException("Error: Wrong payment channel value")
 
         payment_command = {
             "targetGoId": int(self.goid),
@@ -209,7 +253,7 @@ class GoPay(object):
             "recurrenceDateTo": recurrenceDateTo,
             "recurrenceCycle": recurrenceCycle,
             "recurrencePeriod": recurrencePeriod,
-            "paymentChannels": paymentChannels,
+            "paymentChannels": ",".join(self.get_available_payment_channels()),
             "defaultPaymentChannel": defaultPaymentChannel,
             "p1": p1,
             "p2": p2,
@@ -234,6 +278,8 @@ class GoPay(object):
 
         client = self.get_client()
         payment_status = client.service.createPayment(payment_command)
+        if payment_status["result"] != "CALL_COMPLETED":
+            raise GoPayException("Error: communication problem (%s)" % payment_status["resultDescription"])
         result_data = payment_command
         result_data.update(payment_status)
         result_signature = signature.create_command_result_signature(result_data)
@@ -245,22 +291,3 @@ class GoPay(object):
         payment.save()
 
         return self.get_full_integration_url(payment_status["paymentSessionId"], signature.create_redirect_signature(result_data))
-
-
-def test():
-    gopay = GoPay()
-    print gopay.create_payment(
-        "Test produkt",
-        100,
-        "CZK",
-        "Adam",
-        "Štrauch",
-        "Lanškroun",
-        "Houští 474",
-        "56301",
-        "CZE",
-        "cx@initd.cz",
-        "+420777636388",
-        name="Testovací platba - Adam Štrauch - Test produkt"
-    )
-
