@@ -1,12 +1,14 @@
 Python GoPay API v2.3
 =====================
 
+Developed for Fraggo.net s.r.o. <[http://www.fraggo.net/](http://www.fraggo.net/)>
+
 Django app to integrate GoPay into your project.
 
 Instalation
 -----------
 
-...
+    pip install https://github.com/creckx/gopay4django/zipball/master
 
 Configuration
 -------------

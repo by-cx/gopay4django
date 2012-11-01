@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import re
 from setuptools import setup, find_packages
 
 
