@@ -2,7 +2,6 @@ import json
 import uuid
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from gopay.crypt import GoCrypt
 
 class Payment(models.Model):
     uuid = models.CharField(_("UUID"), max_length=64, blank=True, null=True)

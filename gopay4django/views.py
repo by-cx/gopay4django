@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
-from gopay.api import GoPayException, GoPay, Signature
-from gopay.crypt import GoCrypt
-from gopay.models import Payment
+from gopay4django.api import GoPayException, GoPay, Signature
+from gopay4django.crypt import GoCrypt
+from gopay4django.models import Payment
 
 def check(request):
     targetGoId = request.GET.get("targetGoId")

@@ -35,7 +35,7 @@ Add *gopay* into *installed_apps* and set these parameters:
 
 Add this somewhere into your urls.
 
-    url(r'^gopay/', include('gopay.urls')),
+    url(r'^gopay/', include('gopay4django.urls')),
 
 If you don't know what codes you can use, try:
 

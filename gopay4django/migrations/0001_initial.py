@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'Payment'
-        db.create_table('gopay_payment', (
+        db.create_table('gopay4django_payment', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('state', self.gf('django.db.models.fields.CharField')(max_length=32, null=True, blank=True)),
@@ -17,16 +17,16 @@ class Migration(SchemaMigration):
             ('_payment_command', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('_payment_status', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
-        db.send_create_signal('gopay', ['Payment'])
+        db.send_create_signal('gopay4django', ['Payment'])
 
 
     def backwards(self, orm):
         # Deleting model 'Payment'
-        db.delete_table('gopay_payment')
+        db.delete_table('gopay4django_payment')
 
 
     models = {
-        'gopay.payment': {
+        'gopay4django.payment': {
             'Meta': {'object_name': 'Payment'},
             '_payment_command': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             '_payment_status': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
@@ -37,4 +37,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['gopay']
+    complete_apps = ['gopay4django']
