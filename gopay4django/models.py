@@ -13,6 +13,8 @@ class Payment(models.Model):
     p2 = models.CharField(_("P2"), max_length=256, blank=True, null=True)
     p3 = models.CharField(_("P3"), max_length=256, blank=True, null=True)
     p4 = models.CharField(_("P4"), max_length=256, blank=True, null=True)
+    last_notify = models.DateTimeField(_("Last notify"), blank=True, null=True, default=None)
+    notify_counter = models.IntegerField(_("Notify counter"), default=0)
     _payment_command = models.TextField(_("Payment command"), blank=True, null=True)
     _payment_status = models.TextField(_("Payment status"), blank=True, null=True)
 
