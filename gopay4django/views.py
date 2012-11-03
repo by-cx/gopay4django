@@ -6,7 +6,7 @@ from gopay4django.api import GoPayException, GoPay, Signature
 from gopay4django.crypt import GoCrypt
 from gopay4django.models import Payment
 
-def check(request, notification=False):
+def check(request):
     targetGoId = request.GET.get("targetGoId")
     encryptedSignature = request.GET.get("encryptedSignature")
     orderNumber = request.GET.get("orderNumber")
@@ -22,10 +22,7 @@ def check(request, notification=False):
         raise GoPayException("Error: GoId or paymentSessionId not match!")
 
     signature = Signature()
-    if notification:
-        control_signature = signature.create_status_signature(request.GET)
-    else:
-        control_signature = signature.create_identity_signature(request.GET)
+    control_signature = signature.create_identity_signature(request.GET)
     signature.verify_signature(control_signature, encryptedSignature)
 
     # save new status of payment and return True/False by the state (PAID/not PAID)
@@ -50,7 +47,7 @@ def failed(request):
 
 def notify(request):
     try:
-        payment, state = check(request, notification=True)
+        payment, state = check(request)
         response = HttpResponse("OK", content_type="text/plain")
         response.status_code = 200
         payment.notify_counter += 1

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from gopay.api import GoPay, GoPayException
+from gopay4django.api import GoPay, GoPayException
 
 class Command(BaseCommand):
     args = ''
