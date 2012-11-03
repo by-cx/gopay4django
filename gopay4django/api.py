@@ -63,9 +63,9 @@ class Signature(object):
     def _create_signature(self, parms, encoded=True):
         long_string = "|".join(parms)
         gocrypt = GoCrypt()
-        print "Long string:".ljust(25), long_string
-        print "Hash:".ljust(25), gocrypt.hash(long_string)
-        print "Encrypted hash:".ljust(25), gocrypt.encrypt_pydes(long_string)
+        #print "Long string:".ljust(25), long_string
+        #print "Hash:".ljust(25), gocrypt.hash(long_string)
+        #print "Encrypted hash:".ljust(25), gocrypt.encrypt_pydes(long_string)
         if encoded:
             signature = gocrypt.encrypt_pydes(long_string)
         else:
@@ -74,12 +74,12 @@ class Signature(object):
 
     def verify_signature(self, signature1, signature2):
         crypt = GoCrypt()
-        print "My ph1", signature1
-        print "Go ph1", signature2
+        #print "My ph1", signature1
+        #print "Go ph1", signature2
         signature1 = crypt.decrypt_pydes(signature1)
         signature2 = crypt.decrypt_pydes(signature2)
-        print "My ph2", signature1
-        print "Go ph2", signature2
+        #print "My ph2", signature1
+        #print "Go ph2", signature2
         if signature1 != signature2:
             raise GoPayException("Error: signatures dont't match")
         return True
@@ -94,7 +94,7 @@ class Signature(object):
 
     def create_command_signature(self, data, encoded=True):
         parms = self._prepare_parms([data[parm] for parm in SIGNATURES["command"]])
-        print parms
+        #print parms
         return self._create_signature(parms, encoded=encoded)
 
     def create_command_result_signature(self, data, encoded=True):
@@ -188,7 +188,7 @@ class GoPay(object):
         downloaded_methods = client.service.paymentMethodList()
         methods = {}
         for method in downloaded_methods:
-            if method["offline"]: continue
+            #if method["offline"]: continue
             methods[method["code"]] = {
                 "name": method["paymentMethod"],
                 "description": method["description"],
