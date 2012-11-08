@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from gopay4django.api import GoPayException, GoPay, Signature
 from gopay4django.crypt import GoCrypt
 from gopay4django.models import Payment
+from gopay4django.signals import payment_changed
 
 def check(request):
     targetGoId = request.GET.get("targetGoId")
@@ -27,6 +28,7 @@ def check(request):
 
     # save new status of payment and return True/False by the state (PAID/not PAID)
     gopay = GoPay()
+    payment_changed.send(sender=request, payment=payment)
     return payment, gopay.check_payment(payment.id)
 
 
