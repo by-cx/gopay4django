@@ -1,4 +1,4 @@
 Django
 South
-https://github.com/htj/suds-htj/archive/master.zip
+suds
 pyDes
