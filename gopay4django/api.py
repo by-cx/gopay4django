@@ -237,8 +237,6 @@ class GoPay(object):
             raise GoPayException("Error: Wrong currency value")
         if lang not in VALID_LANGS:
             raise GoPayException("Error: Wrong lang value")
-        if type(totalPrice) not in (float, int):
-            raise GoPayException("Error: Wrong price value")
 
         payment_command = {
             "targetGoId": int(self.goid),
