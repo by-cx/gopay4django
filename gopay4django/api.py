@@ -43,7 +43,7 @@ class Signature(object):
                 new_parms.append("1" if parm else "0")
             elif type(parm) == NoneType:
                 new_parms.append("")
-            elif type(parm) == int:
+            elif type(parm) == int or type(parm) == long:
                 new_parms.append("%d" % parm)
             elif type(parm) == float:
                 new_parms.append("%.2f" % parm)
