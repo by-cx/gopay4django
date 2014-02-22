@@ -27,9 +27,9 @@ def check(request):
     signature.verify_signature(control_signature, encryptedSignature)
 
     # save new status of payment and return True/False by the state (PAID/not PAID)
-    gopay = GoPay()
+    is_paid = GoPay().check_payment(payment.id)
     payment_changed.send(sender=request, payment=payment)
-    return payment, gopay.check_payment(payment.id)
+    return payment, is_paid
 
 
 def success(request):
