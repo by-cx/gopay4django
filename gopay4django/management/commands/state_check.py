@@ -10,7 +10,7 @@ class Command(BaseCommand):
         try:
             gopay = GoPay()
             for payment in Payment.objects.filter(state="CREATED"):
-                gopay.check_payment(payment.id)
+                gopay.check_payment(payment)
                 print "%s: %s" % (payment.name, payment.state)
         except GoPayException:
             CommandError("Error occured during checking")

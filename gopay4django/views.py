@@ -27,14 +27,14 @@ def check(request):
     signature.verify_signature(control_signature, encryptedSignature)
 
     # save new status of payment and return True/False by the state (PAID/not PAID)
-    is_paid = GoPay().check_payment(payment.id)
+    GoPay().check_payment(payment)
     payment_changed.send(sender=request, payment=payment)
-    return payment, is_paid
+    return payment
 
 
 def success(request):
     try:
-        payment, state = check(request)
+        payment = check(request)
     except GoPayException:
         return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, payment.uuid))
     return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_SUCCESS_URL, payment.uuid))
@@ -42,19 +42,19 @@ def success(request):
 
 def failed(request):
     try:
-        payment, state = check(request)
+        payment = check(request)
     except GoPayException:
         pass
     return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, payment.uuid))
 
 def notify(request):
     try:
-        payment, state = check(request)
-        response = HttpResponse("OK", content_type="text/plain")
-        response.status_code = 200
+        payment = check(request)
         payment.notify_counter += 1
         payment.last_notify = datetime.datetime.now()
         payment.save()
+        response = HttpResponse("OK", content_type="text/plain")
+        response.status_code = 200
     except GoPayException:
         response = HttpResponse("ERROR", content_type="text/plain")
         response.status_code = 500

@@ -153,9 +153,7 @@ class GoPay(object):
             raise GoPayException("Error: no available payment channel")
         return available_channels
 
-    def check_payment(self, payment_id):
-        payment = get_object_or_404(Payment, id=payment_id)
-
+    def check_payment(self, payment):
         payment_session = {
             "targetGoId": self.goid,
             "paymentSessionId": payment.payment_status.get("paymentSessionId"),
