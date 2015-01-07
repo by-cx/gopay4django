@@ -31,21 +31,33 @@ def check(request):
     payment_changed.send(sender=request, payment=payment)
     return payment
 
+def get_payment_uuid(request, payment):
+    if not payment:
+        try:
+            orderNumber = request.GET.get("orderNumber")
+            payment = Payment.objects.get(id=int(orderNumber))
+        except Payment.DoesNotExist:
+            pass
+    if payment:
+        return payment.uuid
+    return None
 
 def success(request):
+    payment = None
     try:
         payment = check(request)
     except GoPayException:
-        return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, payment.uuid))
-    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_SUCCESS_URL, payment.uuid))
+        return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, get_payment_uuid(request, payment)))
+    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_SUCCESS_URL, get_payment_uuid(request, payment)))
 
 
 def failed(request):
+    payment = None
     try:
         payment = check(request)
     except GoPayException:
         pass
-    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, payment.uuid))
+    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, get_payment_uuid(request, payment)))
 
 def notify(request):
     try:
