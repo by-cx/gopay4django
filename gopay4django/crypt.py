@@ -44,7 +44,7 @@ class GoCrypt(object):
 
     def hash(self, string):
         h = sha1()
-        h.update(string)
+        h.update(string.encode('utf-8'))
         return h.hexdigest()
 
     def encrypt(self, command):

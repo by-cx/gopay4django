@@ -35,3 +35,11 @@ class Payment(models.Model):
         return json.loads(self._payment_status)
     payment_status = property(_get_payment_status, _set_payment_status)
 
+    @property
+    def currency(self):
+        return self.payment_status.get('currency')
+
+    @property
+    def payment_channel(self):
+        return self.payment_status.get('paymentChannel')
+

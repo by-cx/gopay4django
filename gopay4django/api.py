@@ -43,7 +43,7 @@ class Signature(object):
                 new_parms.append("1" if parm else "0")
             elif type(parm) == NoneType:
                 new_parms.append("")
-            elif type(parm) == int:
+            elif type(parm) == int or type(parm) == long:
                 new_parms.append("%d" % parm)
             elif type(parm) == float:
                 new_parms.append("%.2f" % parm)
@@ -153,9 +153,7 @@ class GoPay(object):
             raise GoPayException("Error: no available payment channel")
         return available_channels
 
-    def check_payment(self, payment_id):
-        payment = get_object_or_404(Payment, id=payment_id)
-
+    def check_payment(self, payment):
         payment_session = {
             "targetGoId": self.goid,
             "paymentSessionId": payment.payment_status.get("paymentSessionId"),
@@ -237,8 +235,6 @@ class GoPay(object):
             raise GoPayException("Error: Wrong currency value")
         if lang not in VALID_LANGS:
             raise GoPayException("Error: Wrong lang value")
-        if type(totalPrice) not in (float, int):
-            raise GoPayException("Error: Wrong price value")
 
         payment_command = {
             "targetGoId": int(self.goid),

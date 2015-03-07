@@ -27,34 +27,46 @@ def check(request):
     signature.verify_signature(control_signature, encryptedSignature)
 
     # save new status of payment and return True/False by the state (PAID/not PAID)
-    gopay = GoPay()
+    GoPay().check_payment(payment)
     payment_changed.send(sender=request, payment=payment)
-    return payment, gopay.check_payment(payment.id)
+    return payment
 
+def get_payment_uuid(request, payment):
+    if not payment:
+        try:
+            orderNumber = request.GET.get("orderNumber")
+            payment = Payment.objects.get(id=int(orderNumber))
+        except Payment.DoesNotExist:
+            pass
+    if payment:
+        return payment.uuid
+    return None
 
 def success(request):
+    payment = None
     try:
-        payment, state = check(request)
+        payment = check(request)
     except GoPayException:
-        return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, payment.uuid))
-    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_SUCCESS_URL, payment.uuid))
+        return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, get_payment_uuid(request, payment)))
+    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_SUCCESS_URL, get_payment_uuid(request, payment)))
 
 
 def failed(request):
+    payment = None
     try:
-        payment, state = check(request)
+        payment = check(request)
     except GoPayException:
         pass
-    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, payment.uuid))
+    return HttpResponseRedirect("%s?payment_uuid=%s" % (settings.GOPAY_FAILED_URL, get_payment_uuid(request, payment)))
 
 def notify(request):
     try:
-        payment, state = check(request)
-        response = HttpResponse("OK", content_type="text/plain")
-        response.status_code = 200
+        payment = check(request)
         payment.notify_counter += 1
         payment.last_notify = datetime.datetime.now()
         payment.save()
+        response = HttpResponse("OK", content_type="text/plain")
+        response.status_code = 200
     except GoPayException:
         response = HttpResponse("ERROR", content_type="text/plain")
         response.status_code = 500
