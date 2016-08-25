@@ -28,7 +28,9 @@ SIGNATURES = {
     "identity": ["paymentSessionId", "parentPaymentSessionId", "orderNumber"], # when user is returned back
 }
 
-class GoPayException(Exception): pass
+class GoPayException(Exception):
+    pass
+
 
 class Signature(object):
     def __init__(self, goid=settings.GOPAY_GOID, secret=settings.GOPAY_SECRET_KEY):
@@ -84,34 +86,25 @@ class Signature(object):
             raise GoPayException("Error: signatures dont't match")
         return True
 
-    def create_status_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["status"]])
-        return self._create_signature(parms, encoded=encoded)
+    def __make_signature_method(signature_keys):
+        def create_signature(self, data, encoded=True):
+            parms = []
+            for key in signature_keys:
+                try:
+                    # data.get can't be used, data is not always dict and supports only key access
+                    parms.append(data[key])
+                except KeyError:
+                    parms.append(None)
+            parms = self._prepare_parms(parms)
+            return self._create_signature(parms, encoded=encoded)
+        return create_signature
 
-    def create_redirect_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["redirect"]])
-        return self._create_signature(parms, encoded=encoded)
-
-    def create_command_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["command"]])
-        #print parms
-        return self._create_signature(parms, encoded=encoded)
-
-    def create_command_result_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["command_result"]])
-        return self._create_signature(parms, encoded=encoded)
-
-    def create_status_result_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["status_result"]])
-        return self._create_signature(parms, encoded=encoded)
-
-    def create_identity_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["identity"]])
-        return self._create_signature(parms, encoded=encoded)
-
-    def create_notification_signature(self, data, encoded=True):
-        parms = self._prepare_parms([data[parm] for parm in SIGNATURES["notification"]])
-        return self._create_signature(parms, encoded=encoded)
+    create_status_signature = __make_signature_method(SIGNATURES["status"])
+    create_redirect_signature = __make_signature_method(SIGNATURES["redirect"])
+    create_command_signature = __make_signature_method(SIGNATURES["command"])
+    create_command_result_signature = __make_signature_method(SIGNATURES["command_result"])
+    create_status_result_signature = __make_signature_method(SIGNATURES["status_result"])
+    create_identity_signature = __make_signature_method(SIGNATURES["identity"])
 
 
 class GoPay(object):
@@ -133,7 +126,6 @@ class GoPay(object):
         data = self.get_payment_channels()
         channels_list = []
         for code in data:
-            method = data[code]
             channels_list.append(code)
         return channels_list
 
